@@ -243,7 +243,7 @@ class ZertoGet():
         all_zorg_info = []
         for resource in resources:
             
-            zorg_info = {'zorg_name': zorg_name,
+            zorg_info = {'zorgName': zorg_name,
                          'VPG': {
                              'VpgName': resource['Vpg']['VpgName'],
                              'VMs': []

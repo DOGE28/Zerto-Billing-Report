@@ -6,11 +6,12 @@ zerto = z.ZertoGet()
 # print(zorgs)
 
 resources = zerto.get_zorg_info_from_resources('Allstar-Healthcare')
-
+count = 0
 for resource in resources:
     print(resource)
     print()
+    count += 1
+print(count)
 
 
     
-
