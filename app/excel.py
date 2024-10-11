@@ -54,49 +54,51 @@ def flatten_data(data):
 #     }
 # }
 
-zerto = z.ZertoGet()
-zorgs = zerto.get_zorgs_by_vpg()
+def main():
 
-data = []
-for zorg in zorgs:
-    resources = zerto.get_zorg_info_from_resources(zorg)
-    for resource in resources:
-        data.append(resource)
+    zerto = z.ZertoGet()
+    zorgs = zerto.get_zorgs_by_vpg()
 
-for dat in data:
+    data = []
+    for zorg in zorgs:
+        resources = zerto.get_zorg_info_from_resources(zorg)
+        for resource in resources:
+            data.append(resource)
+
+    for dat in data:
 
 
 
-    # Flatten the data
-    flat_data = flatten_data(dat)
+        # Flatten the data
+        flat_data = flatten_data(dat)
 
-    # Excel file path
-    excel_file = "new_vms_data.xlsx"
+        # Excel file path
+        excel_file = "new_vms_data.xlsx"
 
-    # Try to load an existing workbook, else create a new one
-    try:
-        workbook = load_workbook(excel_file)
-        sheet = workbook.active
-    except FileNotFoundError:
-        workbook = Workbook()
-        sheet = workbook.active
-        
-        # Write the header row
-        headers = [
-            "Timestamp", "Zorg Name", "VPG Name", "VM Name", "vCPUs", 
-            "CPU Used (MHz)", "Active Guest Memory (MB)", "Consumed Host Memory (MB)",
-            "Total Memory (MB)", "Provisioned Storage (GB)", "Used Storage (GB)"
-        ]
-        sheet.append(headers)
+        # Try to load an existing workbook, else create a new one
+        try:
+            workbook = load_workbook(excel_file)
+            sheet = workbook.active
+        except FileNotFoundError:
+            workbook = Workbook()
+            sheet = workbook.active
+            
+            # Write the header row
+            headers = [
+                "Timestamp", "Zorg Name", "VPG Name", "VM Name", "vCPUs", 
+                "CPU Used (MHz)", "Active Guest Memory (MB)", "Consumed Host Memory (MB)",
+                "Total Memory (MB)", "Provisioned Storage (GB)", "Used Storage (GB)"
+            ]
+            sheet.append(headers)
 
-    # Append new data
-    for row in flat_data:
-        sheet.append(row)
+        # Append new data
+        for row in flat_data:
+            sheet.append(row)
 
-    # Save the workbook
-    workbook.save(excel_file)
+        # Save the workbook
+        workbook.save(excel_file)
 
-    print("Data added to Excel!")
+        print("Data added to Excel!")
 
 
 

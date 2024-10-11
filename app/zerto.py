@@ -14,8 +14,8 @@ def utc_to_mountain_time(utc_time):
 
 class _ZertoAuth():
     def __init__(self):
-        self.base_url = settings.sgu_prod_url
-        self.secret = settings.sgu_prod_secret
+        self.base_url = settings.boi_prod_url
+        self.secret = settings.boi_prod_secret
     def auth(self):
         auth_url = f'https://{self.base_url}/auth/realms/zerto/protocol/openid-connect/token'
         print("Attempting to authenticate...")
@@ -214,21 +214,29 @@ class ZertoGet():
         ###EXAMPLE URL: https://sgu-zvm.tonaquint.local/v1/reports/resources?startTime=2024-10-08&endTime=2024-10-09&pageNumber=1&zorgName=3FORM
         m_time = self.get_server_date_time()
         date = m_time.date
-        
+        page_number = 1
+        all_resources = []
         
         headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {self.auth_token}'
         }
-        url = f'https://{self.base_url}/v1/reports/resources?startTime={date}&pageNumber=1&zorgName={zorg_name}&pageSize=1000'
-        response = requests.get(url, headers=headers, verify=False)
-        if response.status_code == 200:
-            resources = response.json()
-            return resources
-        else:
-            print("Failed to get resources...")
-            print(f'Error: {response.status_code} - {response.text} for endpoint')
-            return None
+        stop = True
+        while stop:
+            
+            url = f'https://{self.base_url}/v1/reports/resources?startTime={date}&pageNumber={page_number}&zorgName={zorg_name}&pageSize=1000'
+            response = requests.get(url, headers=headers, verify=False)
+            if response.status_code == 200:
+                resources = response.json()
+                all_resources.extend(resources)
+                page_number += 1
+            else:
+                print("Failed to get resources...")
+                print(f'Error: {response.status_code} - {response.text} for endpoint')
+                return None
+            if resources == []:
+                stop = False
+        return all_resources
 
     def get_zorgs_by_vpg(self) -> list:
         list_of_vpgs = self.get_vpgs()
@@ -248,44 +256,58 @@ class ZertoGet():
                              'VpgName': resource['Vpg']['VpgName'],
                              'VMs': []
                          }}
-            if zorg_info not in all_zorg_info:
-                for resource in resources:
 
-                    if zorg_info['VPG']['VpgName'] == resource['Vpg']['VpgName']:
-            
-                            vm_info = {'VmName': resource['ProtectedSite']['VmInfo']['VmName'],
-                                    'Cpu': {
-                                        'NumberOfvCpus': resource['ProtectedSite']['VmInfo']['Cpu']['NumberOfvCpus'],
-                                        'CpuUsedInMhz': resource['ProtectedSite']['VmInfo']['Cpu']['CpuUsedInMhz']},
-                                        'Memory': {
-                                            'ActiveGuestMemoryInMB': resource['ProtectedSite']['VmInfo']['Memory']['ActiveGuestMemoryInMB'],
-                                            'ConsumedHostMemoryInMB': resource['ProtectedSite']['VmInfo']['Memory']['ConsumedHostMemoryInMB'],
-                                            'MemoryInMB': resource['ProtectedSite']['VmInfo']['Memory']['MemoryInMB']},
-                                        'Storage': {
-                                            'VolumesProvisionedStorageInGB': resource['ProtectedSite']['Storage']['VolumesProvisionedStorageInGB'],
-                                            'VolumesUsedStorageInGB': resource['ProtectedSite']['Storage']['VolumesUsedStorageInGB'],
-                                        }
-                            }
-                            zorg_info['VPG']['VMs'].append(vm_info)
+            if zorg_info['VPG']['VpgName'] == resource['Vpg']['VpgName']:
+    
+                    vm_info = {'VmName': resource['ProtectedSite']['VmInfo']['VmName'],
+                            'Cpu': {
+                                'NumberOfvCpus': resource['ProtectedSite']['VmInfo']['Cpu']['NumberOfvCpus'],
+                                'CpuUsedInMhz': resource['ProtectedSite']['VmInfo']['Cpu']['CpuUsedInMhz']},
+                                'Memory': {
+                                    'ActiveGuestMemoryInMB': resource['ProtectedSite']['VmInfo']['Memory']['ActiveGuestMemoryInMB'],
+                                    'ConsumedHostMemoryInMB': resource['ProtectedSite']['VmInfo']['Memory']['ConsumedHostMemoryInMB'],
+                                    'MemoryInMB': resource['ProtectedSite']['VmInfo']['Memory']['MemoryInMB']},
+                                'Storage': {
+                                    'VolumesProvisionedStorageInGB': resource['ProtectedSite']['Storage']['VolumesProvisionedStorageInGB'],
+                                    'VolumesUsedStorageInGB': resource['ProtectedSite']['Storage']['VolumesUsedStorageInGB'],
+                                }
+                    }
+                    zorg_info['VPG']['VMs'].append(vm_info)
+                    all_zorg_info.append(zorg_info)
             else:
-                for zorg in all_zorg_info:
-                    if zorg['zorg_name'] == zorg_name:
-                        for vpg in zorg['VPG']:
-                            if vpg['VpgName'] == resource['Vpg']['VpgName']:
-                                vm_info = {'VmName': resource['ProtectedSite']['VmInfo']['VmName'],
-                                    'Cpu': {
-                                        'NumberOfvCpus': resource['ProtectedSite']['VmInfo']['Cpu']['NumberOfvCpus'],
-                                        'CpuUsedInMhz': resource['ProtectedSite']['VmInfo']['Cpu']['CpuUsedInMhz']},
-                                        'Memory': {
-                                            'ActiveGuestMemoryInMB': resource['ProtectedSite']['VmInfo']['Memory']['ActiveGuestMemoryInMB'],
-                                            'ConsumedHostMemoryInMB': resource['ProtectedSite']['VmInfo']['Memory']['ConsumedHostMemoryInMB'],
-                                            'MemoryInMB': resource['ProtectedSite']['VmInfo']['Memory']['MemoryInMB']},
-                                        'Storage': {
-                                            'VolumesProvisionedStorageInGB': resource['ProtectedSite']['Storage']['VolumesProvisionedStorageInGB'],
-                                            'VolumesUsedStorageInGB': resource['ProtectedSite']['Storage']['VolumesUsedStorageInGB'],
-                                        }
-                            }
-                            zorg_info['VPG']['VMs'].append(vm_info)
-            all_zorg_info.append(zorg_info)
+                if zorg_info['zorgName'] == zorg_name:
+                    for vpg in zorg_info['VPG']:
+                        if vpg['VpgName'] == resource['Vpg']['VpgName']:
+                            vm_info = {'VmName': resource['ProtectedSite']['VmInfo']['VmName'],
+                                'Cpu': {
+                                    'NumberOfvCpus': resource['ProtectedSite']['VmInfo']['Cpu']['NumberOfvCpus'],
+                                    'CpuUsedInMhz': resource['ProtectedSite']['VmInfo']['Cpu']['CpuUsedInMhz']},
+                                    'Memory': {
+                                        'ActiveGuestMemoryInMB': resource['ProtectedSite']['VmInfo']['Memory']['ActiveGuestMemoryInMB'],
+                                        'ConsumedHostMemoryInMB': resource['ProtectedSite']['VmInfo']['Memory']['ConsumedHostMemoryInMB'],
+                                        'MemoryInMB': resource['ProtectedSite']['VmInfo']['Memory']['MemoryInMB']},
+                                    'Storage': {
+                                        'VolumesProvisionedStorageInGB': resource['ProtectedSite']['Storage']['VolumesProvisionedStorageInGB'],
+                                        'VolumesUsedStorageInGB': resource['ProtectedSite']['Storage']['VolumesUsedStorageInGB'],
+                                    }
+                        }
+                        zorg_info['VPG']['VMs'].append(vm_info)
+                        all_zorg_info.append(zorg_info)
+        #zorg_info['VPG']['VMs'] = set(zorg_info['VPG']['VMs'])
+        
         return all_zorg_info
     
+    def get_vms_of_zorg(self, zorg):
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {self.auth_token}'
+        }
+        url = f'https://{self.base_url}/v1/vms?organizationName={zorg}&includeBackupedVms=false'
+        response = requests.get(url, headers=headers, verify=False)
+        if response.status_code == 200:
+            resources = response.json()
+            return resources
+        else:
+            print("Failed to get Zorg VMs...")
+            print(f'Error: {response.status_code} - {response.text} for endpoint')
+            return None
