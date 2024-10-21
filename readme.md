@@ -20,7 +20,7 @@ cd ~/Zerto-Alerts/Zerto-Billing
 curl -LO https://github.com/DOGE28/Zerto-Billing-Report/archive/refs/heads/main.zip
 unzip main.zip
 rm main.zip
-cd Zerto-Billing-Report
+cd Zerto-Billing-Report-main
 chmod +x install.sh
 ```
 
