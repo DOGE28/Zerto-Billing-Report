@@ -4,6 +4,7 @@ from email.mime.text import MIMEText
 from collections import defaultdict
 from datetime import datetime
 import zerto as z
+from config import settings
 
 
 def aggregate_data(data):
@@ -47,10 +48,12 @@ def send_email(aggregates, location):
     elif location == 'sgu':
         zvm = "St. George"
     month = datetime.now().strftime("%B")
-    smtp_server = '10.200.201.15'
+    smtp_server = settings.smtp_server
     smtp_port = 25
-    sender = 'systems@tonaquint.com'
-    receivers = 'tsully28@hotmail.com'
+    sender = settings.sender
+    test = settings.receiver
+    receiver = test
+    cc = settings.cc
     subject = f'{month} {zvm} Zerto Usage Report'
     email_body = f'Monthly {zvm} Zerto Usage Report for {month}\n\n'
     for stuff in aggregates:
@@ -79,13 +82,14 @@ def send_email(aggregates, location):
 
     msg = MIMEMultipart()
     msg['From'] = sender
-    msg['To'] = receivers
+    msg['To'] = receiver
     msg['Subject'] = subject
+    msg['Cc'] = cc
     msg.attach(MIMEText(email_body, 'plain'))
 
     try:
         smtpObj = smtplib.SMTP(smtp_server, smtp_port)
-        smtpObj.sendmail(sender, receivers, msg.as_string())
+        smtpObj.sendmail(sender, receiver, msg.as_string())
         print(f"Successfully sent email from {zvm}")
     except smtplib.SMTPException:
         print("Error: unable to send email")

@@ -7,6 +7,10 @@ class Settings(BaseSettings):
     boi_prod_secret: str
     fb_prod_url: str
     fb_prod_secret: str
+    sender: str
+    receiver: str
+    cc: str
+    smtp_server: str
 
     class Config:
         env_file = '.env'
