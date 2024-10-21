@@ -117,10 +117,25 @@ def gather_data(location):
 
         full_data.append(data)
     return full_data
+
+def gather_data_one_zorg(location):
+    zerto = z.ZertoGet(location)
+    zorgs = zerto.get_zorgs_by_vpg()
+    full_data = []
+    for zorg in zorgs:
+        if zorg != 'CREngland':
+            continue
+        resources = zerto.get_zorg_info_from_resources(zorg)
+        data = aggregate_data(resources)
+    if data == {}:
+        return
+    full_data.append(data)
+    return full_data
     
 def main():
     for location in ['boi', 'sgu']:
         data = gather_data(location)
         send_email(data, location)
 
-main()
+if __name__ == '__main__':
+    main()
