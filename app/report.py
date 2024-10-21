@@ -56,8 +56,19 @@ def send_email(aggregates, location):
     cc = settings.cc
     subject = f'{month} {zvm} Zerto Usage Report'
     email_body = f'Monthly {zvm} Zerto Usage Report for {month}\n\n'
+    all_total_prov_mem = 0
+    all_total_prov_storage = 0
+    all_total_used_storage = 0
+    all_total_vms = 0
+    all_total_vcpu = 0
+
     for stuff in aggregates:
         for zorg, stats in stuff.items():
+            all_total_prov_mem += stats['Total Provisioned Memory (GB)']
+            all_total_prov_storage += stats['Total Provisioned Storage (GB)']
+            all_total_used_storage += stats['Total Used Storage (GB)']
+            all_total_vms += stats['Total VMs']
+            all_total_vcpu += stats['Total vCPU']
             email_body += f"Zorg Name: {zorg}\n"
             email_body += f"Total VMs: {stats['Total VMs']}\n"
             email_body += f"Total vCPU: {round(stats['Total vCPU'])}\n"
@@ -78,7 +89,22 @@ def send_email(aggregates, location):
                 email_body += f"Total Used Storage (GB): {round(stats['Total Used Storage (GB)'],2)}\n"
             email_body += "\n----------------------------------\n\n"
 
-
+    email_body += 'TOTAL USAGE'
+    email_body += f"Total VMs: {all_total_vms}\n"
+    email_body += f"Total vCPU: {round(all_total_vcpu)}\n"
+    if all_total_prov_mem > 2000:
+        email_body += f"Total Provisioned Memory (TB): {round(all_total_prov_mem/1024,3)}\n"
+    else:
+        email_body += f"Total Provisioned Memory (GB): {round(all_total_prov_mem,2)}\n"
+    if all_total_prov_storage > 2000:
+        email_body += f"Total Provisioned Storage (TB): {round(all_total_prov_storage/1024,3)}\n"
+    else:
+        email_body += f"Total Provisioned Storage (GB): {round(all_total_prov_storage,2)}\n"
+    if all_total_used_storage > 2000:
+        email_body += f"Total Used Storage (TB): {round(all_total_used_storage/1024,3)}\n"
+    else:
+        email_body += f"Total Used Storage (GB): {round(all_total_used_storage,2)}\n"
+    email_body += "\n----------------------------------\n\n"
 
     msg = MIMEMultipart()
     msg['From'] = sender
