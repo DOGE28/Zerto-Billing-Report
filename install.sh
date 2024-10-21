@@ -13,7 +13,7 @@ function echo_message() {
 echo_message "Installing the required python packages"
 
 
-cd ~/Zerto-Alerts/Zerto-Billing
+cd ~/Zerto-Alerts/Zerto-Billing/Zerto-Billing-Report-main
 source venv/bin/activate
 pip install -r requirements.txt
 
