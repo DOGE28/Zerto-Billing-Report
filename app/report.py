@@ -41,14 +41,18 @@ def aggregate_data(data):
     
     return zorg_aggregates
 
-def send_email(aggregates):
+def send_email(aggregates, location):
+    if location == 'boi':
+        zvm = "Boise"
+    elif location == 'sgu':
+        zvm = "St. George"
     month = datetime.now().strftime("%B")
     smtp_server = '10.200.201.15'
     smtp_port = 25
     sender = 'systems@tonaquint.com'
     receivers = 'tsully28@hotmail.com'
-    subject = f'{month} Zerto Usage Report'
-    email_body = f'Monthly Zerto Usage Report for {month}\n\n'
+    subject = f'{month} {zvm} Zerto Usage Report'
+    email_body = f'Monthly {zvm} Zerto Usage Report for {month}\n\n'
     for stuff in aggregates:
         for zorg, stats in stuff.items():
             email_body += f"Zorg Name: {zorg}\n"
@@ -82,39 +86,37 @@ def send_email(aggregates):
     try:
         smtpObj = smtplib.SMTP(smtp_server, smtp_port)
         smtpObj.sendmail(sender, receivers, msg.as_string())
-        print("Successfully sent email")
+        print(f"Successfully sent email from {zvm}")
     except smtplib.SMTPException:
         print("Error: unable to send email")
 
 
 
+def gather_data(location):
+    zerto = z.ZertoGet(location)
+    zorgs = zerto.get_zorgs_by_vpg()
+    full_data = []
 
-zerto = z.ZertoGet()
-
-zorgs = zerto.get_zorgs_by_vpg()
-full_data = []
-
-for zorg in zorgs:
-    vmcount = 0
-    #print(zorg)
-    resources = zerto.get_zorg_info_from_resources(zorg) #Dictionary
-    for vms in resources:
-        for vm in vms['VPG']['VMs']:
-            vmcount += 1
-        
+    for zorg in zorgs:
+        vmcount = 0
+        #print(zorg)
+        resources = zerto.get_zorg_info_from_resources(zorg) #Dictionary
+        for vms in resources:
+            for vm in vms['VPG']['VMs']:
+                vmcount += 1
+            
 
 
-    data = aggregate_data(resources)
-    if data == {}:
-        continue
+        data = aggregate_data(resources)
+        if data == {}:
+            continue
 
-    full_data.append(data)
+        full_data.append(data)
+    return full_data
     
-    #print(f"Total VMs for {zorg}: {vmcount}")
+def main():
+    for location in ['boi', 'sgu']:
+        data = gather_data(location)
+        send_email(data, location)
 
-#print(full_data)
-
-  
-send_email(full_data)
-
-#print(zerto.zerto_auth.base_url)
+main()

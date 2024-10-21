@@ -13,9 +13,16 @@ def utc_to_mountain_time(utc_time):
     return mountain_time.strftime('%Y-%m-%d %H:%M:%S')
 
 class _ZertoAuth():
-    def __init__(self):
-        self.base_url = settings.boi_prod_url
-        self.secret = settings.boi_prod_secret
+    def __init__(self, location):
+        if location == 'sgu':
+            self.base_url = settings.sgu_prod_url
+            self.secret = settings.sgu_prod_secret
+        elif location == 'boi':
+            self.base_url = settings.boi_prod_url
+            self.secret = settings.boi_prod_secret
+        else:
+            print("Invalid location... Please choose either 'sgu' or 'boi'")
+            return
     def auth(self):
         auth_url = f'https://{self.base_url}/auth/realms/zerto/protocol/openid-connect/token'
         print("Attempting to authenticate...")
@@ -37,8 +44,8 @@ class _ZertoAuth():
         
 
 class ZertoGet():
-    def __init__(self):
-        self.zerto_auth = _ZertoAuth()
+    def __init__(self, location):
+        self.zerto_auth = _ZertoAuth(location)
         self.auth_token = self.zerto_auth.auth()
         self.subs_naughty_list = [8, 24, 27, 30, 31, 32, 33] # List of substatuses that are not good and will cause a VPG to be considered down
         self.base_url = self.zerto_auth.base_url
