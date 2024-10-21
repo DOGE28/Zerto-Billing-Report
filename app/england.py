@@ -60,12 +60,15 @@ def send_email():
 
     sender = settings.sender
     receiver = settings.receiver
+    
     date = datetime.now().strftime('%m-%d-%Y')
     msg = MIMEMultipart()
+
     msg['From'] = sender
     msg['To'] = "tonaquintreports@crengland.com"
     msg['Subject'] = 'CREngland Zerto Report for Week of ' + date
     msg.attach(MIMEText(email_body, 'plain'))
+
     attachment = open('data.csv', 'rb')
     part = MIMEBase('application', 'octet-stream')
     part.set_payload(attachment.read())
